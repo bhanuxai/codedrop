@@ -12,7 +12,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type"]
 }))
 
-app.options('*', cors())
+
 
 mongoose.connect(process.env.MONGO_URL)
 
