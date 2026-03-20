@@ -157,7 +157,7 @@
       icon.className = "ph ph-spinner";
 
       try {
-        let res = await fetch("https://codedrop-tcmp.onrender.com/save", {
+        let res = await fetch("https://codedrop-tmcp.onrender.com/save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content: textInput })
@@ -188,7 +188,7 @@
       icon.className = "ph ph-spinner";
 
       try {
-        let res = await fetch(`https://codedrop-tcmp.onrender.com/get/${codeInput}`);
+        let res = await fetch(`https://codedrop-tmcp.onrender.com/get/${codeInput}`);
         let data = await res.json();
 
         const resContainer = document.getElementById("result-container");
