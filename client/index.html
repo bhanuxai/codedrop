@@ -157,7 +157,7 @@
       icon.className = "ph ph-spinner";
 
       try {
-        let res = await fetch("http://localhost:5000/save", {
+        let res = await fetch("https://codedrop-tmcp.onrender.com/save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content: textInput })
@@ -169,7 +169,7 @@
         codeVal.innerText = data.code;
         codeDisplay.classList.remove("hidden");
       } catch (e) {
-        alert("Error generating code. Ensure server is running at localhost:5000.");
+        alert("Server error. Please try again.");
         console.error(e);
       } finally {
         btn.classList.remove("loading");
@@ -188,14 +188,14 @@
       icon.className = "ph ph-spinner";
 
       try {
-        let res = await fetch(`http://localhost:5000/get/${codeInput}`);
+        let res = await fetch(`https://codedrop-backend.onrender.com/get/${codeInput}`);
         let data = await res.json();
 
         const resContainer = document.getElementById("result-container");
         document.getElementById("result").innerText = data.content || "No data found for this code.";
         resContainer.classList.remove("hidden");
       } catch (e) {
-        alert("Error retrieving data. Ensure the server is running at localhost:5000.");
+        alert("Server error. Please try again.");
         console.error(e);
       } finally {
         btn.classList.remove("loading");
