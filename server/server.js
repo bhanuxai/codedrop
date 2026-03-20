@@ -5,20 +5,26 @@ const cors = require('cors')
 
 const app = express()
 app.use(express.json())
-app.use(cors())
+
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}))
+
+app.options('*', cors())
 
 mongoose.connect(process.env.MONGO_URL)
 
-app.get('/', (req, res) => {
-  res.send("Server running")
-})
-
-app.listen(5000, () => console.log("Server started"))
 const Data = require('./model')
 
 function generateCode() {
   return Math.random().toString(36).substring(2, 8)
 }
+
+app.get('/', (req, res) => {
+  res.send("Server running")
+})
 
 app.post('/save', async (req, res) => {
   const code = generateCode()
@@ -32,3 +38,5 @@ app.get('/get/:code', async (req, res) => {
   if (!data) return res.status(404).send("Not found")
   res.json(data)
 })
+
+app.listen(5000, () => console.log("Server started"))
