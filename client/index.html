@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeDrop</title>
+  <link rel="stylesheet" href="ui.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+  <div class="theme-toggle">
+    <button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle Theme" title="Toggle Light/Dark Mode">
+      <i class="ph ph-sun" id="themeIcon"></i>
+    </button>
+  </div>
+
+  <main class="container">
+    <header>
+      <div class="icon-wrapper">
+        <i class="ph ph-lightning-fill"></i>
+      </div>
+      <h1>CodeDrop</h1>
+      <p class="subtitle">Quickly share text across your devices securely.</p>
+      
+      <div class="alert warning">
+        <i class="ph ph-warning-circle"></i>
+        <span><strong>Note:</strong> All shared content is automatically deleted after 1 hour.</span>
+      </div>
+    </header>
+
+    <div class="card-grid">
+      <!-- Paste Section -->
+      <div class="card glass-card">
+        <div class="card-header">
+          <i class="ph ph-clipboard-text"></i>
+          <span>Paste Text</span>
+        </div>
+        <div class="input-group">
+          <textarea id="text" placeholder="Type or paste your text here..." rows="5"></textarea>
+          <!-- Paste helper button inside text area -->
+          <button class="paste-helper-btn" onclick="pasteTextHelper()" title="Paste from clipboard">
+            <i class="ph ph-clipboard"></i>
+          </button>
+        </div>
+        <button id="saveBtn" class="primary-btn" onclick="save()">
+          <span>Generate Code</span>
+          <i class="ph ph-arrow-right" id="saveIcon"></i>
+        </button>
+
+        <!-- Hidden Result area for Generate Code -->
+        <div id="generatedCodeDisplay" class="result-container hidden">
+          <div class="result-header">
+            <span>Your Code</span>
+            <button id="copyCodeBtn" class="icon-btn" onclick="copyGeneratedCode()" title="Copy Code">
+              <i class="ph ph-copy" id="copyCodeIcon"></i>
+              <span id="copyCodeText">Copy</span>
+            </button>
+          </div>
+          <p id="generatedCode" class="result-text code-display"></p>
+        </div>
+      </div>
+
+      <!-- Retrieve Section -->
+      <div class="card glass-card">
+        <div class="card-header">
+          <i class="ph ph-download-simple"></i>
+          <span>Retrieve Text</span>
+        </div>
+        <div class="input-group">
+          <input id="code" placeholder="Enter sharing code" autocomplete="off">
+          <button class="paste-helper-btn" onclick="pasteCodeHelper()" title="Paste code from clipboard">
+            <i class="ph ph-clipboard"></i>
+          </button>
+        </div>
+        <button id="getBtn" class="primary-btn" onclick="getData()">
+          <span>Fetch Data</span>
+          <i class="ph ph-magnifying-glass" id="getIcon"></i>
+        </button>
+
+        <!-- Hidden Result area for Retrieve -->
+        <div id="result-container" class="result-container hidden">
+          <div class="result-header">
+            <span>Retrieved Text</span>
+            <button id="copyBtn" class="icon-btn" onclick="copyText()" title="Copy to clipboard">
+              <i class="ph ph-copy" id="copyIcon"></i>
+              <span id="copyTextSpan">Copy</span>
+            </button>
+          </div>
+          <p id="result" class="result-text"></p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <p>Built with by <strong>Bhanuxai</strong></p>
+    <a href="https://instagram.com/bhanuxai" target="_blank" rel="noopener noreferrer" class="social-link"
+      title="Follow on Instagram">
+      <i class="ph ph-instagram-logo"></i>
+    </a>
+  </footer>
+
+  <script>
+    // Theme Logic
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      const icon = document.getElementById('themeIcon');
+      icon.className = next === 'dark' ? 'ph ph-sun' : 'ph ph-moon';
+      localStorage.setItem('theme', next);
+    }
+
+    // Initialize Theme
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.addEventListener("DOMContentLoaded", () => {
+      const icon = document.getElementById('themeIcon');
+      if (icon) icon.className = savedTheme === 'dark' ? 'ph ph-sun' : 'ph ph-moon';
+    });
+
+    // Paste Helpers
+    async function pasteTextHelper() {
+      try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById('text').value = text;
+      } catch (err) {
+        console.error('Failed to read clipboard: ', err);
+        alert("Clipboard permission denied or unavailable. Please paste manually.");
+      }
+    }
+
+    async function pasteCodeHelper() {
+      try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById('code').value = text;
+      } catch (err) {
+        console.error('Failed to read clipboard: ', err);
+        alert("Clipboard permission denied or unavailable. Please paste manually.");
+      }
+    }
+
+    // Core App Logic
+    async function save() {
+      const textInput = document.getElementById("text").value;
+      if (!textInput.trim()) return alert("Please enter some text to share.");
+
+      const btn = document.getElementById("saveBtn");
+      const icon = document.getElementById("saveIcon");
+
+      btn.classList.add("loading");
+      icon.className = "ph ph-spinner";
+
+      try {
+        let res = await fetch("http://localhost:5000/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: textInput })
+        });
+        let data = await res.json();
+
+        const codeDisplay = document.getElementById("generatedCodeDisplay");
+        const codeVal = document.getElementById("generatedCode");
+        codeVal.innerText = data.code;
+        codeDisplay.classList.remove("hidden");
+      } catch (e) {
+        alert("Error generating code. Ensure server is running at localhost:5000.");
+        console.error(e);
+      } finally {
+        btn.classList.remove("loading");
+        icon.className = "ph ph-arrow-right";
+      }
+    }
+
+    async function getData() {
+      const codeInput = document.getElementById("code").value;
+      if (!codeInput.trim()) return alert("Please enter a code.");
+
+      const btn = document.getElementById("getBtn");
+      const icon = document.getElementById("getIcon");
+
+      btn.classList.add("loading");
+      icon.className = "ph ph-spinner";
+
+      try {
+        let res = await fetch(`http://localhost:5000/get/${codeInput}`);
+        let data = await res.json();
+
+        const resContainer = document.getElementById("result-container");
+        document.getElementById("result").innerText = data.content || "No data found for this code.";
+        resContainer.classList.remove("hidden");
+      } catch (e) {
+        alert("Error retrieving data. Ensure the server is running at localhost:5000.");
+        console.error(e);
+      } finally {
+        btn.classList.remove("loading");
+        icon.className = "ph ph-magnifying-glass";
+      }
+    }
+
+    // Copy Helpers
+    function copyText() {
+      let text = document.getElementById("result").innerText;
+      let btn = document.getElementById("copyBtn");
+      let icon = document.getElementById("copyIcon");
+      let span = document.getElementById("copyTextSpan");
+
+      navigator.clipboard.writeText(text);
+
+      icon.className = "ph ph-check";
+      span.innerText = "Copied";
+      btn.classList.add("copied");
+
+      setTimeout(() => {
+        icon.className = "ph ph-copy";
+        span.innerText = "Copy";
+        btn.classList.remove("copied");
+      }, 2000);
+    }
+
+    function copyGeneratedCode() {
+      let code = document.getElementById("generatedCode").innerText;
+      let btn = document.getElementById("copyCodeBtn");
+      let icon = document.getElementById("copyCodeIcon");
+      let span = document.getElementById("copyCodeText");
+
+      navigator.clipboard.writeText(code);
+
+      icon.className = "ph ph-check";
+      span.innerText = "Copied";
+      btn.classList.add("copied");
+
+      setTimeout(() => {
+        icon.className = "ph ph-copy";
+        span.innerText = "Copy";
+        btn.classList.remove("copied");
+      }, 2000);
+    }
+  </script>
+
+</body>
+
+</html>
