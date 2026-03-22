@@ -13,7 +13,6 @@ app.use(cors({
 }))
 
 
-
 mongoose.connect(process.env.MONGO_URL)
 
 const Data = require('./model')
