@@ -25,10 +25,13 @@
   <meta property="twitter:title" content="CodeDrop - Secure Text & Code Sharing">
   <meta property="twitter:description" content="Quickly and securely share text or code snippets across your devices. All shared content is automatically deleted after 1 hour.">
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="ui.css">
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <meta name="google-site-verification" content="NsgeqAZSIry1jXdU0mQmSdzep4gVutx5e8dvT2RDVnY" />
+
 </head>
 
 <body>
@@ -137,12 +140,15 @@
       localStorage.setItem('theme', next);
     }
 
-    // Initialize Theme
+    // Initialize Theme & Background Server Warmup Ping (mitigates Render free tier cold start)
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     document.addEventListener("DOMContentLoaded", () => {
       const icon = document.getElementById('themeIcon');
       if (icon) icon.className = savedTheme === 'dark' ? 'ph ph-sun' : 'ph ph-moon';
+      
+      // Ping backend silently to wake up Render container immediately on page load
+      fetch("https://codedrop-tmcp.onrender.com/").catch(() => {});
     });
 
     // Paste Helpers
@@ -184,13 +190,17 @@
           body: JSON.stringify({ content: textInput })
         });
         let data = await res.json();
+        if (!res.ok) {
+          alert(data.error || "Failed to generate code.");
+          return;
+        }
 
         const codeDisplay = document.getElementById("generatedCodeDisplay");
         const codeVal = document.getElementById("generatedCode");
         codeVal.innerText = data.code;
         codeDisplay.classList.remove("hidden");
       } catch (e) {
-        alert("Server error. Please try again.");
+        alert("Server error or cold start timeout. Please try again in a moment.");
         console.error(e);
       } finally {
         btn.classList.remove("loading");
@@ -212,11 +222,16 @@
         let res = await fetch(`https://codedrop-tmcp.onrender.com/get/${codeInput}`);
         let data = await res.json();
 
+        if (!res.ok) {
+          alert(data.error || "Code not found or expired.");
+          return;
+        }
+
         const resContainer = document.getElementById("result-container");
         document.getElementById("result").innerText = data.content || "No data found for this code.";
         resContainer.classList.remove("hidden");
       } catch (e) {
-        alert("Server error. Please try again.");
+        alert("Server error or invalid response. Please check the code and try again.");
         console.error(e);
       } finally {
         btn.classList.remove("loading");
